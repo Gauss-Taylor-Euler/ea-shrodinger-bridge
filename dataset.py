@@ -1,3 +1,4 @@
+import random
 from typing import Generator, Tuple
 import torch
 from torchvision import datasets, transforms
@@ -5,15 +6,12 @@ from torch.utils.data import DataLoader
 from const import DATA_PATH, DEVICE,  BatchSize, isMain, seed
 
 
-print(DEVICE)
-
 seed()
 
 
 class DatasetManager:
     numberOfChannels = 1
     shape = (32, 32)
-    trainPriorSize = 400
 
     def __init__(self) -> None:
         transform = transforms.Compose(
@@ -31,12 +29,16 @@ class DatasetManager:
             transform=transform
         )
 
+        self.trainSize = len(self.trainDataset)
+
         self.testDataset = datasets.MNIST(
             root=DATA_PATH,
             train=False,
             download=True,
             transform=transform
         )
+
+        self.testSize = len(self.testDataset)
 
         self.trainDataLoaded: DataLoader[Tuple[torch.Tensor, torch.Tensor]] = DataLoader(
             dataset=self.trainDataset, batch_size=BatchSize.train, shuffle=True,)
@@ -59,12 +61,23 @@ class DatasetManager:
             yield index, X
 
     def priorEntriesTrain(self) -> Generator[Tuple[int, torch.Tensor]]:
-        for index in range(self.trainPriorSize):
+        for index in range(self.trainSize):
             yield index, torch.randn((BatchSize.train, self.numberOfChannels, self.shape[0], self.shape[1])).to(DEVICE)
 
     def priorEntriesTest(self) -> Generator[Tuple[int, torch.Tensor]]:
-        for index in range(self.trainPriorSize):
+        for index in range(self.testSize):
             yield index, torch.randn((BatchSize.test, self.numberOfChannels, self.shape[0], self.shape[1])).to(DEVICE)
+
+    def getRandomPriors(self):
+        return torch.randn((BatchSize.test, self.numberOfChannels, self.shape[0], self.shape[1])).to(DEVICE)
+
+    def getRandomTest(self):
+        idx = random.randint(0, self.testSize-1)
+        return self.testDataset[idx][0]
+
+    def getRandomTrain(self):
+        idx = random.randint(0, self.trainSize-1)
+        return self.trainDataset[idx][0]
 
 
 datasetManager = DatasetManager()

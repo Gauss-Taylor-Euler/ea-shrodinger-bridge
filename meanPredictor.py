@@ -238,20 +238,21 @@ if isMain(__name__):
     mPred = PredManager.getForwardPredUntrained(
         DatasetManager.numberOfChannels)
     datasetManager = DatasetManager()
-    _, X, _ = next(datasetManager.trainEntries())
-
-    with torch.inference_mode():
-        out = mPred(X, 1)
 
     for index in range(3):
 
-        imgIn = X[index].squeeze().to(Devices.cpu)
+        X = datasetManager.getRandomTrain().unsqueeze(0)
+
+        with torch.inference_mode():
+            out = mPred(X, 1)
+
+        imgIn = X.squeeze().to(Devices.cpu)
 
         plt.imshow(imgIn)
 
         plt.show()
 
-        imgOut = out[index].squeeze().to(Devices.cpu)
+        imgOut = out.squeeze().to(Devices.cpu)
 
         plt.imshow(imgOut)
 
