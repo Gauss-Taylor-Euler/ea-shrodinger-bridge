@@ -1,5 +1,6 @@
 from math import sqrt
-from torch import nn, optim
+from typing import Any
+from torch import nn
 import torch
 from tqdm import tqdm
 
@@ -9,30 +10,19 @@ from meanPredictor import PredManager
 
 
 class MeanPredictorTrainer():
-    def __init__(self, epochs, lr, T, nChannels, numberOfTimesSteps) -> None:
+    def __init__(self, epochs: int, lr: float, T: float, nChannels: int, numberOfTimesSteps: int, dsbIterationNumber: int) -> None:
         self.epochs = epochs
         self.lr = lr
         self.T = T
         self.nChannels = nChannels
         self.numberOfTimesSteps = numberOfTimesSteps
+        self.dsbIterationNumber = dsbIterationNumber
 
-    def trainForward(self, backward: nn.Module, priorIterator):
-        nEpochs = self.epochs
-        T = self.T
-
-        lr = self.lr
-
-        forward = PredManager.getForwardPredUntrained(
-            numberOfChannels=self.nChannels)
-
-        numberOfTimesSteps = self.numberOfTimesSteps
-
+    def trainForward(self, backward: nn.Module, forward: nn.Module, nEpochs: int, T: float, lr: float, numberOfTimesSteps: int, priorIterator):
         optimizer = Optimizer.getOptimizer(params=forward.parameters(), lr=lr)
 
         for _ in tqdm(range(nEpochs)):
             for _, X in priorIterator:
-
-                print("prior", X.shape)
                 forward.train()
                 optimizer.zero_grad()
 
@@ -76,22 +66,13 @@ class MeanPredictorTrainer():
 
         return forward
 
-    def trainBackward(self, forward: nn.Module, XtrainIterator):
-        nEpochs = self.epochs
-        T = self.T
-        lr = self.lr
-
-        backward = PredManager.getBackwardPredUntrained(
-            numberOfChannels=self.nChannels)
-
-        numberOfTimesSteps = self.numberOfTimesSteps
+    def trainBackward(self, backward: nn.Module, forward: nn.Module, nEpochs: int, T: float, lr: float, numberOfTimesSteps: int, XtrainIterator):
 
         optimizer = Optimizer.getOptimizer(params=backward.parameters(), lr=lr)
 
         for _ in tqdm(range(nEpochs)):
             for _, X in XtrainIterator:
 
-                print("img", X.shape)
                 backward.train()
                 optimizer.zero_grad()
 
@@ -133,27 +114,50 @@ class MeanPredictorTrainer():
                 optimizer.step()
         return backward
 
-    def train(self, nSteps):
+    def train(self, backward: nn.Module | None = None, forward: nn.Module | None = None,  nEpochs: int | None = None, lr: float | None = None, T: float | None = None, nChannels: int | None = None, numberOfTimesSteps: int | None = None, dsbIterationNumber: int | None = None):
 
-        for i in range(nSteps):
-            pass
+        # sadly no ?? in python :( lol
+        def getOtherIfNone(x, defaultX) -> Any:
+            if x == None:
+                return defaultX
+            return x
+
+        nChannelsUsed: int = getOtherIfNone(nChannels, self.nChannels)
+
+        backwardUsed: nn.Module = getOtherIfNone(
+            backward, PredManager.getBackwardPredUntrained(numberOfChannels=nChannelsUsed))
+        forwardUsed: nn.Module = getOtherIfNone(
+            forward, PredManager.getForwardPredUntrained(numberOfChannels=nChannelsUsed))
+
+        dsbIterationNumberUsed = getOtherIfNone(
+            dsbIterationNumber, self.dsbIterationNumber)
+
+        nEpochsUsed = getOtherIfNone(nEpochs, self.epochs)
+
+        lrUsed = getOtherIfNone(lr, self.lr)
+
+        TUsed = getOtherIfNone(T, self.T)
+
+        numberOfTimesStepsUsed: int = getOtherIfNone(
+            numberOfTimesSteps, self.numberOfTimesSteps)
+
+        for _ in range(dsbIterationNumberUsed):
+            self.trainBackward(backward=backwardUsed, forward=forwardUsed, nEpochs=nEpochsUsed,
+                               T=TUsed, lr=lrUsed, numberOfTimesSteps=numberOfTimesStepsUsed, XtrainIterator=None)
+
+            self.trainForward(backward=backwardUsed, forward=forwardUsed, nEpochs=nEpochsUsed,
+                              T=TUsed, lr=lrUsed, numberOfTimesSteps=numberOfTimesStepsUsed, priorIterator=None)
 
 
 if isMain(__name__):
     epochs = 10
     lr = 0.01
     T = 10
+    dsbIterationNumber = 10
+    nChannels = 1
+    numberOfTimesSteps = 10
 
     meanPredictorTrainer = MeanPredictorTrainer(
-        epochs=epochs, lr=lr, T=T, nChannels=1, numberOfTimesSteps=10)
+        epochs=epochs, lr=lr, T=T, nChannels=nChannels, numberOfTimesSteps=numberOfTimesSteps, dsbIterationNumber=dsbIterationNumber)
 
     datasetManager = DatasetManager()
-
-    print("Backward")
-    meanPredictorTrainer.trainBackward(
-        forward=PredManager.getForwardPredUntrained(numberOfChannels=1, ), XtrainIterator=datasetManager.trainEntries())
-
-    print("Forward")
-
-    meanPredictorTrainer.trainForward(backward=PredManager.getBackwardPredUntrained(
-        numberOfChannels=1), priorIterator=datasetManager.priorEntriesTrain())
