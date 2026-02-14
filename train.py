@@ -10,6 +10,8 @@ from const import isMain
 from dataset import datasetManager
 from trainer import MeanPredictorTrainer
 
+import json
+
 
 def saveModelsSimple(backwardModel, forwardModel, iterationLoss, paramsId, numericParams, baseDir="models"):
     lossStr = f"{iterationLoss:.4f}".replace('.', 'p').replace('-', 'neg')
@@ -26,6 +28,9 @@ def saveModelsSimple(backwardModel, forwardModel, iterationLoss, paramsId, numer
 
     runFolder = os.path.join(baseDir, "id_"+paramsId+"_" +
                              numericParamStr+"_"+lossStr)
+
+    with open(os.path.join(runFolder, "paramsUsed.json"), "w") as f:
+        f.write(json.dumps(numericParams))
 
     os.makedirs(runFolder, exist_ok=True)
 
