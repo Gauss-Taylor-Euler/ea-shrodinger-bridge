@@ -1,11 +1,22 @@
 import matplotlib.pyplot as plt
 from torch import nn
 import torch
+from dataset import datasetManager
 
 from const import DEVICE, Devices, ParamsMeanPredictor, isMain
 from dataset import DatasetManager
 from filmLayer import FilmLayer
 from positionalEncoder import PositionalEncoder
+
+
+class OUMeanPredictor(nn.Module):
+    def __init__(self, alphaOu, T, numberOfTimesSteps):
+        super().__init__()
+        self.gammaK = T/numberOfTimesSteps
+        self.alphaOu = alphaOu
+
+    def forward(self, X, k):
+        return X-self.alphaOu*X*self.gammaK
 
 
 class MeanPredictor(nn.Module):
@@ -237,7 +248,6 @@ class PredManager:
 if isMain(__name__):
     mPred = PredManager.getForwardPredUntrained(
         DatasetManager.numberOfChannels)
-    datasetManager = DatasetManager()
 
     for index in range(3):
 

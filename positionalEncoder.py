@@ -1,6 +1,6 @@
 import torch
 
-from const import MAIN
+from const import DEVICE, MAIN
 
 
 class PositionalEncoder:
@@ -15,7 +15,7 @@ class PositionalEncoder:
             (out % 2 == 0)*torch.cos(k/self.powerConstant **
                                      ((out-1)/self.positionalEncodingSize))
 
-        return out
+        return out.to(DEVICE)
 
 
 if __name__ == MAIN:

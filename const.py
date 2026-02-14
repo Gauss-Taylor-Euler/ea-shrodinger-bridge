@@ -16,7 +16,8 @@ def isMain(name):
     return name == MAIN
 
 
-SEED = 42
+SEED = None
+
 
 DEVICE = Devices.cuda if torch.cuda.is_available() else Devices.cpu
 

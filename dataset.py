@@ -48,36 +48,41 @@ class DatasetManager:
 
     def testEntries(self) -> Generator[Tuple[int, torch.Tensor]]:
         for index, (X, y) in enumerate(self.testDataLoaded):
-            X.to(DEVICE)
-            y.to(DEVICE)
+            X = X.to(DEVICE)
+            y = y.to(DEVICE)
 
             yield index, X
 
-    def trainEntries(self) -> Generator[Tuple[int, torch.Tensor]]:
+    def trainEntries(self, proportion: float = 1.0) -> Generator[Tuple[int, torch.Tensor]]:
         for index, (X, y) in enumerate(self.trainDataLoaded):
-            X.to(DEVICE)
-            y.to(DEVICE)
+            if random.random() > proportion:
+                continue
+            X = X.to(DEVICE)
+            y = y.to(DEVICE)
 
             yield index, X
 
-    def priorEntriesTrain(self) -> Generator[Tuple[int, torch.Tensor]]:
-        for index in range(self.trainSize):
+    def priorEntriesTrain(self, proportion: float = 1.0) -> Generator[Tuple[int, torch.Tensor]]:
+        for index in range(self.trainSize//BatchSize.train):
+            if random.random() > proportion:
+                continue
+
             yield index, torch.randn((BatchSize.train, self.numberOfChannels, self.shape[0], self.shape[1])).to(DEVICE)
 
     def priorEntriesTest(self) -> Generator[Tuple[int, torch.Tensor]]:
-        for index in range(self.testSize):
+        for index in range(self.testSize//BatchSize.test):
             yield index, torch.randn((BatchSize.test, self.numberOfChannels, self.shape[0], self.shape[1])).to(DEVICE)
 
-    def getRandomPriors(self):
-        return torch.randn((BatchSize.test, self.numberOfChannels, self.shape[0], self.shape[1])).to(DEVICE)
+    def getRandomPriors(self) -> torch.Tensor:
+        return torch.randn((self.numberOfChannels, self.shape[0], self.shape[1])).to(DEVICE)
 
-    def getRandomTest(self):
+    def getRandomTest(self) -> torch.Tensor:
         idx = random.randint(0, self.testSize-1)
-        return self.testDataset[idx][0]
+        return self.testDataset[idx][0].to(DEVICE)
 
-    def getRandomTrain(self):
+    def getRandomTrain(self) -> torch.Tensor:
         idx = random.randint(0, self.trainSize-1)
-        return self.trainDataset[idx][0]
+        return self.trainDataset[idx][0].to(DEVICE)
 
 
 datasetManager = DatasetManager()
@@ -85,9 +90,9 @@ datasetManager = DatasetManager()
 if isMain(__name__):
 
     for index, X in datasetManager.trainEntries():
-        print(X.shape)
+        print(X.shape, X.device)
         break
 
     for index, X in datasetManager.testEntries():
-        print(X.shape)
+        print(X.shape, X.device)
         break
