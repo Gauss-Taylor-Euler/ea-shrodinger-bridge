@@ -28,6 +28,7 @@ class MeanPredictorTrainer():
         print(f"Starting Forward Training with {nEpochs} epochs, lr={lr}")
 
         meanEpochLoss = 0
+        epochLossList = []
         for epoch in tqdm(range(nEpochs), desc="Forward Epochs"):
             epochLoss = 0.0
             batchCount = 0
@@ -86,6 +87,8 @@ class MeanPredictorTrainer():
                 optimizer.step()
 
             avgEpochLoss = epochLoss / batchCount if batchCount > 0 else 0
+
+            epochLossList.append(avgEpochLoss)
             print(
                 f"\nForward - Epoch {epoch+1}/{nEpochs}, Average Loss: {avgEpochLoss:.6f}\n\n")
 
@@ -96,7 +99,7 @@ class MeanPredictorTrainer():
 
         print("Forward Training Completed")
 
-        return forward, meanEpochLoss
+        return forward, meanEpochLoss, epochLossList
 
     def trainBackward(self, backward: nn.Module, forward: nn.Module, nEpochs: int, T: float, lr: float, numberOfTimesSteps: int, XtrainIteratorFun, proportion):
 
@@ -105,6 +108,8 @@ class MeanPredictorTrainer():
         print(f"Starting Backward Training with {nEpochs} epochs, lr={lr}")
 
         meanEpochLoss = 0
+
+        epochLossList = []
         for epoch in tqdm(range(nEpochs), desc="Backward Epochs"):
             epochLoss = 0.0
             batchCount = 0
@@ -162,6 +167,7 @@ class MeanPredictorTrainer():
                 optimizer.step()
 
             avgEpochLoss = epochLoss / batchCount if batchCount > 0 else 0
+            epochLossList.append(avgEpochLoss)
             print(
                 f"\nBackward - Epoch {epoch+1}/{nEpochs}, Average Loss: {avgEpochLoss:.6f}\n\n")
             meanEpochLoss += avgEpochLoss
@@ -169,7 +175,7 @@ class MeanPredictorTrainer():
         if nEpochs > 0:
             meanEpochLoss = meanEpochLoss/nEpochs
         print("Backward Training Completed")
-        return backward, meanEpochLoss
+        return backward, meanEpochLoss, epochLossList
 
     def train(self, priorIterator: Any | None = None, XtrainIteraton: Any | None = None, backward: nn.Module | None = None, forward: nn.Module | None = None,  nEpochs: int | None = None, lr: float | None = None, T: float | None = None, nChannels: int | None = None, numberOfTimesSteps: int | None = None, dsbIterationNumber: int | None = None, alphaOu=None, proportion: float | None = None):
 
@@ -218,6 +224,8 @@ class MeanPredictorTrainer():
 
         lastLoss = 0
 
+        dsbIterationLossListForward = []
+        dsbIterationLossListBackward = []
         for i in range(dsbIterationNumberUsed):
 
             print("="*60)
@@ -231,17 +239,21 @@ class MeanPredictorTrainer():
 
             print("@"*60)
             print("Starting Backward Training Phase")
-            backwardUsed, backMeanLoss = self.trainBackward(backward=backwardUsed, forward=curForward, nEpochs=nEpochsUsed,
-                                                            T=TUsed, lr=lrUsed, numberOfTimesSteps=numberOfTimesStepsUsed, XtrainIteratorFun=XtrainIteratonUsedFun, proportion=proportionUsed)
+            backwardUsed, backMeanLoss, backwarEpochLossList = self.trainBackward(backward=backwardUsed, forward=curForward, nEpochs=nEpochsUsed,
+                                                                                  T=TUsed, lr=lrUsed, numberOfTimesSteps=numberOfTimesStepsUsed, XtrainIteratorFun=XtrainIteratonUsedFun, proportion=proportionUsed)
+
+            dsbIterationLossListBackward.append(backwarEpochLossList)
 
             print("#"*60)
             print("\n\nStarting Forward Training Phase")
-            forwardUsed, forwardMeanLoss = self.trainForward(backward=backwardUsed, forward=forwardUsed, nEpochs=nEpochsUsed,
-                                                             T=TUsed, lr=lrUsed, numberOfTimesSteps=numberOfTimesStepsUsed, priorIteratorFun=priorIteratorUsedFun, proportion=proportionUsed)
+            forwardUsed, forwardMeanLoss, forwardEpochLossList = self.trainForward(backward=backwardUsed, forward=forwardUsed, nEpochs=nEpochsUsed,
+                                                                                   T=TUsed, lr=lrUsed, numberOfTimesSteps=numberOfTimesStepsUsed, priorIteratorFun=priorIteratorUsedFun, proportion=proportionUsed)
+
+            dsbIterationLossListForward.append(forwardEpochLossList)
 
             lastLoss = (backMeanLoss+forwardMeanLoss)/2
 
-        return (backwardUsed, forwardUsed, lastLoss)
+        return (backwardUsed, forwardUsed, lastLoss, dsbIterationLossListForward, dsbIterationLossListBackward)
 
 
 if isMain(__name__):

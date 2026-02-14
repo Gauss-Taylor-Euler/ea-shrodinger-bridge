@@ -4,6 +4,8 @@ import random
 
 DATA_PATH = "./data"
 
+MODELS_PATH = "./models/"
+
 MAIN = "__main__"
 
 

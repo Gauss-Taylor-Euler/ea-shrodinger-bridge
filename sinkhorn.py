@@ -81,15 +81,15 @@ def sinkhornV2(p_0: NDArray, p_1: NDArray, eps: float = 0.0001, max_iter: int = 
     return (x, y, norm, cnt)
 
 
-def generate_random_permutation_matrix(n: int) -> np.ndarray:
+def generateRandomPermutationMatrix(n: int) -> np.ndarray:
     if not isinstance(n, int) or n <= 0:
         raise ValueError("Dimension 'n' must be a positive integer.")
 
     permutation = np.random.permutation(n)
-    identity_matrix = np.identity(n)
-    permutation_matrix = identity_matrix[permutation]
+    identityMatrix = np.identity(n)
+    permutationMatrix = identityMatrix[permutation]
 
-    return permutation_matrix
+    return permutationMatrix
 
 
 def generateBinom(n):
@@ -104,7 +104,7 @@ def generateBinom(n):
     return BinomMat
 
 
-def generate_stochastic_matrix(n):
+def generateStochasticMatrix(n):
     matrix = np.random.rand(n, n)
     matrix = matrix / matrix.sum(axis=1, keepdims=True)
     return matrix
@@ -151,14 +151,14 @@ if __name__ == "__main__":
 
     Unif = np.ones((n, n))/n
 
-    BistochaPrm = generate_random_permutation_matrix(n)
+    BistochaPrm = generateRandomPermutationMatrix(n)
 
     BinomMat = generateBinom(n)
 
-    RandomMatStochat = generate_stochastic_matrix(n)
+    RandomMatStochat = generateStochasticMatrix(n)
 
-    Pi = [RandomMatStochat, generate_stochastic_matrix(n),
-          generate_stochastic_matrix(n)
+    Pi = [RandomMatStochat, generateStochasticMatrix(n),
+          generateStochasticMatrix(n)
 
           ]
 

@@ -1,0 +1,95 @@
+import torch
+import os
+import matplotlib.pyplot as plt
+import sys
+import json
+
+from const import DEVICE
+from meanPredictor import PredManager
+from predictor import Predictor
+from dataset import datasetManager
+
+
+def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5):
+    paramsFilePath = os.path.join(modelFolderPath, "paramsUsed.json")
+    try:
+        with open(paramsFilePath, 'r') as f:
+            params = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: paramsUsed.json not found in {modelFolderPath}")
+        return
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from {paramsFilePath}")
+        return
+
+    nChannels = params.get('nChannels', 1)
+    T = params.get('T', 1.0)
+    numberOfTimesSteps = params.get('numberOfTimesSteps', 22)
+
+    forwardModel = PredManager.getForwardPredUntrained(
+        numberOfChannels=nChannels)
+    backwardModel = PredManager.getBackwardPredUntrained(
+        numberOfChannels=nChannels)
+
+    backwardPath = os.path.join(modelFolderPath, "backward.pth")
+    forwardPath = os.path.join(modelFolderPath, "forward.pth")
+
+    try:
+        backwardModel.load_state_dict(
+            torch.load(backwardPath, map_location=DEVICE))
+        forwardModel.load_state_dict(
+            torch.load(forwardPath, map_location=DEVICE))
+    except FileNotFoundError:
+        print(f"Error: Model files not found in {modelFolderPath}")
+        return
+    except Exception as e:
+        print(f"Error loading model state_dict: {e}")
+        return
+
+    backwardModel.eval()
+    forwardModel.eval()
+
+    predictor = Predictor(
+        backward=backwardModel,
+        forward=forwardModel,
+        numberOfTimesSteps=numberOfTimesSteps,
+        T=T,
+        calcDevice=DEVICE
+    )
+
+    imageShape = (nChannels, datasetManager.shape[0], datasetManager.shape[1])
+
+    print(
+        f"Generating {numImages} images from model: {os.path.basename(modelFolderPath)}...")
+
+    for i in range(numImages):
+        randomPrior = torch.randn(1, *imageShape, device=DEVICE)
+        generatedImage = predictor.generateBackward(randomPrior)
+
+        randomPriorCpu = randomPrior.squeeze().cpu()
+        generatedImageCpu = generatedImage.squeeze().cpu()
+
+        plt.figure(figsize=(10, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.imshow(randomPriorCpu)
+        plt.title(f"Random Prior (Noise) - Image {i+1}")
+        plt.axis('off')
+
+        plt.subplot(1, 2, 2)
+        plt.imshow(generatedImageCpu)
+        plt.title(f"Generated Image (Backward Process) - Image {i+1}")
+        plt.axis('off')
+
+        plt.suptitle(f"Model: {os.path.basename(modelFolderPath)}")
+        plt.show()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python testModels.py <path_to_model_folder>")
+        print("Example: python testModels.py models/id_000254_1e5_lr0p0001_T1p0_dsb4_nts5_ao1p0_prop0p03_0p2037")
+        sys.exit(1)
+
+    modelFolderPath = sys.argv[1]
+    testModelAndGenerateImages(modelFolderPath, numImages=5)

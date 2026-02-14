@@ -1,4 +1,5 @@
 import random
+import os
 from typing import Generator, Tuple
 import torch
 from torchvision import datasets, transforms
@@ -14,6 +15,10 @@ class DatasetManager:
     shape = (32, 32)
 
     def __init__(self) -> None:
+
+        if not os.path.exists(DATA_PATH):
+            os.mkdir(DATA_PATH)
+
         transform = transforms.Compose(
             [
                 # We add 2 of padding to make them 32x32

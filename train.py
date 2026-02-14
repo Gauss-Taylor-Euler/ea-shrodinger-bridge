@@ -6,14 +6,18 @@ import json
 from datetime import datetime
 from math import inf
 
-from const import isMain
+from const import MODELS_PATH, isMain
 from dataset import datasetManager
 from trainer import MeanPredictorTrainer
 
 import json
 
 
-def saveModelsSimple(backwardModel, forwardModel, iterationLoss, paramsId, numericParams, baseDir="models"):
+if not os.path.exists(MODELS_PATH):
+    os.mkdir(MODELS_PATH)
+
+
+def saveModelsSimple(backwardModel, forwardModel, iterationLoss, paramsId, numericParams, dsbIterationLossListForward, dsbIterationLossListBackward, baseDir="models"):
     lossStr = f"{iterationLoss:.4f}".replace('.', 'p').replace('-', 'neg')
 
     numericParamStr = "_".join([
@@ -29,10 +33,14 @@ def saveModelsSimple(backwardModel, forwardModel, iterationLoss, paramsId, numer
     runFolder = os.path.join(baseDir, "id_"+paramsId+"_" +
                              numericParamStr+"_"+lossStr)
 
-    with open(os.path.join(runFolder, "paramsUsed.json"), "w") as f:
+    os.makedirs(runFolder, exist_ok=True)
+
+    with open(os.path.join(runFolder, "paramsUsed.json"), "a+") as f:
         f.write(json.dumps(numericParams))
 
-    os.makedirs(runFolder, exist_ok=True)
+    with open(os.path.join(runFolder, "lossPerIterationPerEpochs.json"), "a+") as f:
+        f.write(json.dumps({"backwardLosses": dsbIterationLossListBackward,
+                "forwardLosses": dsbIterationLossListForward}))
 
     backFilename = os.path.join(
         runFolder, f"backward.pth")
@@ -63,12 +71,13 @@ def trainModelWithParamAndSave(
     )
 
     try:
-        (backwardModel, forwardModel, currentLoss) = trainer.train()
+        (backwardModel, forwardModel, currentLoss, dsbIterationLossListForward,
+         dsbIterationLossListBackward) = trainer.train()
         print(
             f"Training Run (ID: {paramsId}) Completed. Final DSB Iteration Loss: {currentLoss:.6f}")
 
         saveModelsSimple(backwardModel, forwardModel,
-                         currentLoss, paramsId, numericParams)
+                         currentLoss, paramsId, numericParams, dsbIterationLossListForward, dsbIterationLossListBackward)
         print(f"Models saved successfully for run {paramsId}.")
         return backwardModel, forwardModel, currentLoss
 
@@ -78,6 +87,12 @@ def trainModelWithParamAndSave(
 
 
 if isMain(__name__):
+
+    if len(sys.argv) != 2:
+        print("Usage: python train.py <path_to_hyperparamer_json>")
+        print("Example: python train.py ./hyperParams/testHyperParams_2.json")
+        sys.exit(1)
+
     paramsJsonPath = sys.argv[1]
     try:
         with open(paramsJsonPath, 'r') as f:
