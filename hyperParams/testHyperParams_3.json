@@ -1,0 +1,13 @@
+{
+  "paramSpace": {
+    "epochs": [7, 8],
+    "lr": [0.0001],
+    "T": [1.0],
+    "dsbIterationNumber": [2,3,4],
+    "nChannels": [1],
+    "numberOfTimesSteps": [25],
+    "alphaOu": [1.0],
+    "proportion": [0.005]
+  },
+  "numRandomTrials": 1
+}

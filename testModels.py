@@ -10,7 +10,7 @@ from predictor import Predictor
 from dataset import datasetManager
 
 
-def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5):
+def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5, numberOfTimesSteps=None, T=None):
     paramsFilePath = os.path.join(modelFolderPath, "paramsUsed.json")
     try:
         with open(paramsFilePath, 'r') as f:
@@ -23,8 +23,12 @@ def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5):
         return
 
     nChannels = params.get('nChannels', 1)
-    T = params.get('T', 1.0)
-    numberOfTimesSteps = params.get('numberOfTimesSteps', 22)
+
+    if T == None:
+        T = params.get('T', 1.0)
+
+    if numberOfTimesSteps == None:
+        numberOfTimesSteps = params.get('numberOfTimesSteps', 22)
 
     forwardModel = PredManager.getForwardPredUntrained(
         numberOfChannels=nChannels)
@@ -72,12 +76,12 @@ def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5):
         plt.figure(figsize=(10, 5))
 
         plt.subplot(1, 2, 1)
-        plt.imshow(randomPriorCpu)
+        plt.imshow(randomPriorCpu, cmap="gray")
         plt.title(f"Random Prior (Noise) - Image {i+1}")
         plt.axis('off')
 
         plt.subplot(1, 2, 2)
-        plt.imshow(generatedImageCpu)
+        plt.imshow(generatedImageCpu, cmap="gray")
         plt.title(f"Generated Image (Backward Process) - Image {i+1}")
         plt.axis('off')
 
@@ -86,10 +90,25 @@ def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python testModels.py <path_to_model_folder>")
+    if len(sys.argv) < 2:
+        print(
+            "Usage: python testModels.py <path_to_model_folder> [optional_number_of_images] [optional_number_of_times_steps] [optional_T]")
         print("Example: python testModels.py models/id_000254_1e5_lr0p0001_T1p0_dsb4_nts5_ao1p0_prop0p03_0p2037")
         sys.exit(1)
 
     modelFolderPath = sys.argv[1]
-    testModelAndGenerateImages(modelFolderPath, numImages=5)
+    numberOfTimesSteps = None
+    T = None
+    numberOfImages = 5
+
+    if len(sys.argv) >= 3:
+        numberOfImages = int(sys.argv[2])
+
+    if len(sys.argv) >= 4:
+        numberoftimessteps = int(sys.argv[3])
+
+    if len(sys.argv) >= 5:
+        T = float(sys.argv[4])
+
+    testModelAndGenerateImages(
+        modelFolderPath, numImages=numberOfImages, numberOfTimesSteps=numberOfTimesSteps, T=T)
