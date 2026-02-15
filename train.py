@@ -89,7 +89,7 @@ def trainModelWithParamAndSave(
 if isMain(__name__):
 
     if len(sys.argv) != 2:
-        print("Usage: python train.py <path_to_hyperparamer_json>")
+        print("Usage: python train.py path_to_hyperparamer_json")
         print("Example: python train.py ./hyperParams/testHyperParams_2.json")
         sys.exit(1)
 

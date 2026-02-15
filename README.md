@@ -13,9 +13,7 @@ The implementation includes:
 *   An iterative proportional fitting (IPF) training loop for DSB.
 *   A hyperparameter search framework to find optimal model configurations.
 
-
 Inspired by the following paper: https://arxiv.org/abs/2106.01357v1
-
 
 ## Repository
 
@@ -129,20 +127,45 @@ The `train.py` script is configured to read hyperparameter search spaces from a 
 
 ## Generating Samples from Trained Models
 
-The `test.py` script is used to load a specific trained model and generate multiple images from random prior noise.
+The `testModels.py` script is used to load a specific trained model and generate multiple images from random prior noise.
 
 1.  **Identify a Trained Model Folder**:
     After running `train.py`, navigate to the `./models` directory and choose a specific run folder (e.g., `models/id_000254_1e5_lr0p0001_T1p0_dsb4_nts5_ao1p0_prop0p03_0p2037`).
 
 2.  **Execute the test script**:
     ```bash
-    python test.py models/id_000254_1e5_lr0p0001_T1p0_dsb4_nts5_ao1p0_prop0p03_0p2037
+    python test.py models/id_000254_1e5_lr0p0001_T1p0_dsb4_nts5_ao1p0_prop0p03_0p2037  
     ```
     (Replace the example path with your chosen model folder).
 
     This will:
     *   Load the `paramsUsed.json` from the specified folder to retrieve model configuration.
     *   Load the `backward.pth` and `forward.pth` model weights.
-    *   Generate 5 new images from random prior noise using the `backward` process.
+    *   Generate 10 new images from random prior noise using the `backward` process.
     *   Display each generated image alongside its initial noise input using `matplotlib`.
 
+    The general syntax is: 
+        python testModels.py path_to_model_folder [optional_number_of_images] [optional_display_time_seconds] [optional_number_of_times_steps] [optional_T]
+
+## Demo 
+
+
+![demo][demo.gif]
+
+
+
+Above is a demo with a model trained with the following parameters :
+
+```json
+{
+  "epochs": 8,
+  "lr": 0.0001,
+  "T": 1.0,
+  "dsbIterationNumber": 4,
+  "numberOfTimesSteps": 25,
+  "alphaOu": 1.0,
+  "proportion": 0.005
+}
+```
+
+Even with only 5% of the data and a low number of iterations we can already recognize some numbers.

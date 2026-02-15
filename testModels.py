@@ -1,4 +1,5 @@
 import torch
+import time
 import os
 import matplotlib.pyplot as plt
 import sys
@@ -10,7 +11,7 @@ from predictor import Predictor
 from dataset import datasetManager
 
 
-def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5, numberOfTimesSteps=None, T=None):
+def testModelAndGenerateImages(modelFolderPath: str, numImages: int, displayTime: float, numberOfTimesSteps: int | None = None, T: float | None = None):
     paramsFilePath = os.path.join(modelFolderPath, "paramsUsed.json")
     try:
         with open(paramsFilePath, 'r') as f:
@@ -65,6 +66,8 @@ def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5, numberO
 
     print(
         f"Generating {numImages} images from model: {os.path.basename(modelFolderPath)}...")
+    print(
+        f"Displaying each image for {displayTime} seconds. Close the window to exit early.")
 
     for i in range(numImages):
         randomPrior = torch.randn(1, *imageShape, device=DEVICE)
@@ -86,13 +89,17 @@ def testModelAndGenerateImages(modelFolderPath: str, numImages: int = 5, numberO
         plt.axis('off')
 
         plt.suptitle(f"Model: {os.path.basename(modelFolderPath)}")
-        plt.show()
+        plt.show(block=False)
+        plt.pause(displayTime)
+        plt.close()
+
+    print("Finished displaying images.")
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(
-            "Usage: python testModels.py <path_to_model_folder> [optional_number_of_images] [optional_number_of_times_steps] [optional_T]")
+            "Usage: python testModels.py path_to_model_folder [optional_number_of_images] [optional_display_time_seconds] [optional_number_of_times_steps] [optional_T] ")
         print("Example: python testModels.py models/id_000254_1e5_lr0p0001_T1p0_dsb4_nts5_ao1p0_prop0p03_0p2037")
         sys.exit(1)
 
@@ -100,15 +107,19 @@ if __name__ == "__main__":
     numberOfTimesSteps = None
     T = None
     numberOfImages = 5
+    displayTime = 0.6
 
     if len(sys.argv) >= 3:
         numberOfImages = int(sys.argv[2])
 
     if len(sys.argv) >= 4:
-        numberoftimessteps = int(sys.argv[3])
+        displayTime = float(sys.argv[3])
 
     if len(sys.argv) >= 5:
-        T = float(sys.argv[4])
+        numberOfTimesSteps = int(sys.argv[4])
+
+    if len(sys.argv) >= 6:
+        T = float(sys.argv[5])
 
     testModelAndGenerateImages(
-        modelFolderPath, numImages=numberOfImages, numberOfTimesSteps=numberOfTimesSteps, T=T)
+        modelFolderPath, numImages=numberOfImages, numberOfTimesSteps=numberOfTimesSteps, T=T, displayTime=displayTime)
