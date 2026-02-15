@@ -145,12 +145,17 @@ The `testModels.py` script is used to load a specific trained model and generate
     *   Display each generated image alongside its initial noise input using `matplotlib`.
 
     The general syntax is: 
-        python testModels.py path_to_model_folder [optional_number_of_images] [optional_display_time_seconds] [optional_number_of_times_steps] [optional_T]
+    ```bash
+    python testModels.py path_to_model_folder [optional_number_of_images] [optional_display_time_seconds] [optional_number_of_times_steps] [optional_T]
+    ```
 
 ## Demo 
 
 
-![demo][demo.gif]
+
+<div align="center">
+  <img src="./demo.gif" >
+</div>
 
 
 

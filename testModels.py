@@ -106,7 +106,7 @@ if __name__ == "__main__":
     modelFolderPath = sys.argv[1]
     numberOfTimesSteps = None
     T = None
-    numberOfImages = 5
+    numberOfImages = 10
     displayTime = 0.6
 
     if len(sys.argv) >= 3:
