@@ -173,4 +173,4 @@ Above is a demo with a model trained with the following parameters :
 }
 ```
 
-Even with only 5% of the data and a low number of iterations we can already recognize some numbers.
+Even with only 5% of the data and a low number of iterations we can already recognize some digits.
